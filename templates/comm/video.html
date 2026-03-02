@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Video Call: #{{ room_name }} - massxg{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Full height layout overriding base padding */
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding-top: 0 !important;
+        height: calc(100vh - 70px);
+        /* Subtract navbar height */
+    }
+
+    .video-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+        background: #0f172a;
+        overflow-y: auto;
+    }
+
+    .video-participant {
+        background: #1e293b;
+        border-radius: var(--radius-lg);
+        position: relative;
+        overflow: hidden;
+        border: 2px solid transparent;
+        transition: border-color var(--transition-fast);
+        aspect-ratio: 16 / 9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .video-participant.active-speaker {
+        border-color: #10b981;
+    }
+
+    /* Video element placeholder */
+    .video-stream {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .participant-name {
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .controls-bar {
+        height: 80px;
+        background: rgba(15, 23, 42, 0.95);
+        border-top: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 0 2rem;
+    }
+
+    .control-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .control-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .control-btn.danger {
+        background: #ef4444;
+        color: white;
+        border: none;
+    }
+
+    .control-btn.danger:hover {
+        background: #dc2626;
+    }
+
+    .control-btn.off {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="video-grid" id="video-grid">
+    <!-- Local Participant -->
+    <div class="video-participant active-speaker" id="local-participant">
+        <video id="local-video" class="video-stream" autoplay muted playsinline></video>
+        <div class="participant-name">
+            <i class="fa-solid fa-microphone"></i> You ({{ request.user.username }})
+        </div>
+        <div
+            style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; z-index: -1;">
+            <div
+                style="width: 80px; height: 80px; border-radius: 50%; background: var(--accent-primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;">
+                {{ request.user.username|make_list|first|upper }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Remote Participant Placeholder -->
+    <div class="video-participant" id="remote-participant-placeholder">
+        <div
+            style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary);">
+            <i class="fa-solid fa-satellite-dish" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>Waiting for others to join #{{ room_name }}...</p>
+        </div>
+    </div>
+</div>
+
+<div class="controls-bar">
+    <button class="control-btn" id="toggle-mic" title="Toggle Microphone">
+        <i class="fa-solid fa-microphone"></i>
+    </button>
+    <button class="control-btn" id="toggle-video" title="Toggle Camera">
+        <i class="fa-solid fa-video"></i>
+    </button>
+    <button class="control-btn" title="Screen Share">
+        <i class="fa-solid fa-desktop"></i>
+    </button>
+    <a href="{% url 'comm:room' room_name %}" class="control-btn danger" title="Leave Call"
+        style="text-decoration: none;">
+        <i class="fa-solid fa-phone-slash"></i>
+    </a>
+</div>
+
+<script>
+    // WebRTC Boilerplate Interface Code
+    const localVideo = document.getElementById('local-video');
+    const toggleMicBtn = document.getElementById('toggle-mic');
+    const toggleVideoBtn = document.getElementById('toggle-video');
+
+    let localStream = null;
+    let isMicOn = true;
+    let isVideoOn = true;
+
+    async function initCamera() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream;
+        } catch (error) {
+            console.error('Error accessing media devices.', error);
+            // Revert UI if camera fails
+            toggleVideoBtn.classList.add('off');
+            toggleVideoBtn.innerHTML = '<i class="fa-solid fa-video-slash"></i>';
+        }
+    }
+
+    initCamera();
+
+    toggleMicBtn.addEventListener('click', () => {
+        isMicOn = !isMicOn;
+        if (localStream) {
+            localStream.getAudioTracks()[0].enabled = isMicOn;
+        }
+
+        if (isMicOn) {
+            toggleMicBtn.classList.remove('off');
+            toggleMicBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        } else {
+            toggleMicBtn.classList.add('off');
+            toggleMicBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+        }
+    });
+
+    toggleVideoBtn.addEventListener('click', () => {
+        isVideoOn = !isVideoOn;
+        if (localStream) {
+            localStream.getVideoTracks()[0].enabled = isVideoOn;
+        }
+
+        if (isVideoOn) {
+            toggleVideoBtn.classList.remove('off');
+            toggleVideoBtn.innerHTML = '<i class="fa-solid fa-video"></i>';
+        } else {
+            toggleVideoBtn.classList.add('off');
+            toggleVideoBtn.innerHTML = '<i class="fa-solid fa-video-slash"></i>';
+        }
+    });
+</script>
+{% endblock %}

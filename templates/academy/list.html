@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Academy - massxg{% endblock %}
+
+{% block extra_css %}
+<style>
+    .academy-header {
+        background: radial-gradient(circle at 50% 100%, rgba(239, 68, 68, 0.15) 0%, transparent 60%),
+            linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, transparent 100%);
+        padding: 4rem 0 3rem 0;
+        margin-bottom: 3rem;
+        border-bottom: 1px solid var(--glass-border);
+        text-align: center;
+    }
+
+    .search-bar {
+        display: flex;
+        gap: 1rem;
+        background: rgba(30, 41, 59, 0.6);
+        padding: 0.5rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        max-width: 800px;
+        margin: 2rem auto 0 auto;
+    }
+
+    .search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+        outline: none;
+    }
+
+    .category-select {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.5rem;
+        outline: none;
+        border-right: 1px solid var(--glass-border);
+        cursor: pointer;
+    }
+
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .course-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        text-decoration: none;
+        overflow: hidden;
+        padding: 0;
+    }
+
+    .course-thumbnail {
+        height: 180px;
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--glass-border);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .course-thumbnail::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(0deg, rgba(15, 23, 42, 0.8) 0%, transparent 100%);
+    }
+
+    .level-badge {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        z-index: 10;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+
+    .course-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="academy-header fade-in-up">
+    <div class="container">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;"><i class="fa-solid fa-graduation-cap"
+                style="color: #ef4444;"></i> massxg Academy</h1>
+        <p style="color: var(--text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto;">Master
+            computational biology and AI in life sciences with curated video courses from beginner to advanced.</p>
+
+        <form method="get" class="search-bar">
+            <select name="level" class="category-select">
+                <option value="">All Levels</option>
+                {% for val, label in levels %}
+                <option value="{{ val }}" {% if selected_level==val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="q" value="{{ query }}" class="search-input"
+                placeholder="Search for Python, Single-cell, Differential Expression...">
+            <button type="submit" class="btn btn-primary"
+                style="border-radius: var(--radius-md); background: #ef4444; border-color: #ef4444;">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="container pb-5" style="padding-bottom: 4rem;">
+    {% if courses %}
+    <div class="course-grid fade-in-up delay-100">
+        {% for course in courses %}
+        <a href="{% url 'academy:detail' course.pk %}" class="glass-card course-card">
+            <div class="course-thumbnail" {% if course.thumbnail
+                %}style="background-image: url('{{ course.thumbnail }}');" {% endif %}>
+                {% if not course.thumbnail %}
+                <i class="fa-solid fa-play" style="font-size: 3rem; color: rgba(255,255,255,0.2); z-index: 5;"></i>
+                {% endif %}
+                <span
+                    class="level-badge {% if course.level == 'beginner' %}bg-green-500{% elif course.level == 'advanced' %}bg-purple-500{% endif %}">
+                    {{ course.get_level_display }}
+                </span>
+            </div>
+
+            <div class="course-content">
+                <h3 style="color: var(--text-primary); margin-bottom: 0.75rem; font-size: 1.25rem;">{{ course.title }}
+                </h3>
+                <p
+                    style="color: var(--text-secondary); font-size: 0.9rem; flex: 1; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                    {{ course.description }}
+                </p>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 1rem; color: var(--text-secondary); font-size: 0.85rem;">
+                    <span><i class="fa-solid fa-list-ul"></i> {{ course.lessons.count }} Lessons</span>
+                    <span style="color: #ef4444; font-weight: 500;">Start Learning &rarr;</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-panel text-center fade-in-up" style="text-align: center; padding: 4rem 2rem;">
+        <i class="fa-solid fa-chalkboard-user"
+            style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+        <h3>No courses found</h3>
+        <p style="color: var(--text-secondary);">Try adjusting your search filters or check back later for new content.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

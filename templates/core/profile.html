@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    .profile-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .grid-layout {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .grid-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .activity-list {
+        list-style: none;
+    }
+
+    .activity-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 3rem;">
+    <div class="dashboard-header fade-in-up">
+        <div class="profile-info">
+            <div class="user-avatar">{{ user.username|make_list|first|upper }}</div>
+            <div>
+                <h1 style="margin-bottom: 0.25rem;">{{ user.username }}</h1>
+                <p style="color: var(--text-secondary);">{{ user.email|default:"Bioinformatics Researcher" }}</p>
+            </div>
+        </div>
+        <div>
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid-layout">
+        <!-- Sidebar -->
+        <div class="fade-in-up delay-100">
+            <div class="glass-card mb-4" style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-chart-pie"></i> Platform Usage
+                </h3>
+                <div style="margin-bottom: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem; color: var(--text-secondary);">
+                        <span>Compute Quota</span>
+                        <span>12 / 100 hrs</span>
+                    </div>
+                    <div
+                        style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 12%; height: 100%; background: var(--accent-primary);"></div>
+                    </div>
+                </div>
+                <div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem; color: var(--text-secondary);">
+                        <span>Storage (Datasets)</span>
+                        <span>4.2 / 50 GB</span>
+                    </div>
+                    <div
+                        style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div style="width: 8.4%; height: 100%; background: var(--accent-secondary);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-link"></i> Quick Links</h3>
+                <ul style="list-style:none; display:flex; flex-direction:column; gap:0.75rem;">
+                    <li><a href="/datasets/"
+                            style="display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);"><i
+                                class="fa-solid fa-database" style="color:var(--accent-primary); width:20px;"></i> My
+                            Datasets</a></li>
+                    <li><a href="/ai-hub/"
+                            style="display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);"><i
+                                class="fa-solid fa-microchip" style="color:var(--accent-primary); width:20px;"></i>
+                            Saved Models</a></li>
+                    <li><a href="/research/"
+                            style="display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);"><i
+                                class="fa-solid fa-book-open-reader"
+                                style="color:var(--accent-primary); width:20px;"></i> Reading List</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="fade-in-up delay-200">
+            <div class="glass-panel" style="padding: 2rem;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Recent Activity</h2>
+
+                <ul class="activity-list">
+                    <li class="activity-item">
+                        <div class="activity-icon"><i class="fa-solid fa-user-plus"></i></div>
+                        <div>
+                            <h4 style="margin-bottom: 0.25rem; font-size: 1.05rem;">Account Created</h4>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Welcome to the massxg open
+                                platform.</p>
+                            <span style="font-size: 0.8rem; color: #64748b;">Just now</span>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon"
+                            style="background: rgba(139, 92, 246, 0.1); color: var(--accent-secondary);"><i
+                                class="fa-solid fa-rocket"></i></div>
+                        <div>
+                            <h4 style="margin-bottom: 0.25rem; font-size: 1.05rem;">Getting Started</h4>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Explore the Academy, read
+                                preprints, or upload your first dataset.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

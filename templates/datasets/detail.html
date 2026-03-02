@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ dataset.title }} - massxg Datasets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 4rem 0 3rem 0;
+        margin-bottom: 3rem;
+    }
+
+    .meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .meta-tag strong {
+        color: var(--text-primary);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 3rem;
+    }
+
+    @media (max-width: 900px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-header fade-in-up">
+    <div class="container">
+        <a href="{% url 'datasets:list' %}"
+            style="color: var(--accent-primary); font-size: 0.9rem; display: inline-block; margin-bottom: 1.5rem;">
+            &larr; Back to Datasets
+        </a>
+
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+            <span class="badge">{{ dataset.get_category_display }}</span>
+            {% if not dataset.is_public %}
+            <span class="badge"
+                style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">Private</span>
+            {% endif %}
+        </div>
+
+        <h1 style="font-size: 3rem; line-height: 1.1; margin-bottom: 1.5rem; max-width: 900px;">{{ dataset.title }}</h1>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div class="meta-tag">
+                <i class="fa-regular fa-user" style="color: var(--accent-primary);"></i> Contributor: <strong>{{
+                    dataset.uploaded_by.username }}</strong>
+            </div>
+            <div class="meta-tag">
+                <i class="fa-regular fa-calendar" style="color: var(--accent-primary);"></i> Uploaded: <strong>{{
+                    dataset.uploaded_at|date:"F j, Y" }}</strong>
+            </div>
+            <div class="meta-tag">
+                <i class="fa-solid fa-server" style="color: var(--accent-primary);"></i> Size: <strong>{{
+                    dataset.file_size_bytes|filesizeformat }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container content-grid fade-in-up delay-100" style="padding-bottom: 6rem;">
+    <!-- Main Content -->
+    <div>
+        <div class="glass-panel" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+                <i class="fa-solid fa-align-left text-gradient"></i> Description
+            </h3>
+            <div style="color: var(--text-primary); line-height: 1.8; white-space: pre-wrap;">{{ dataset.description }}
+            </div>
+        </div>
+
+        {% if dataset.tags %}
+        <div class="glass-panel">
+            <h3 style="margin-bottom: 1.5rem;">Tags</h3>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                {% for tag in dataset.tags.split %}
+                <span
+                    style="background: rgba(59, 130, 246, 0.1); color: var(--accent-primary); border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem;">{{
+                    tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar / Actions -->
+    <div>
+        <div class="glass-card" style="position: sticky; top: 100px;">
+            <h3 style="margin-bottom: 1rem;">Dataset Access</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                This dataset is available for direct scientific download. High speed CDNs are routed based on user
+                origin.
+            </p>
+
+            {% if dataset.file %}
+            <a href="{{ dataset.file.url }}" class="btn btn-primary"
+                style="width: 100%; display: flex; justify-content: center; margin-bottom: 1rem;">
+                <i class="fa-solid fa-download"></i> Download Origin File
+            </a>
+            {% else %}
+            <button class="btn btn-outline" style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>
+                File Unavailable
+            </button>
+            {% endif %}
+
+            <div
+                style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.8rem; color: #a8b2d1; margin-top: 1.5rem; overflow-x: auto;">
+                $ massxg pull {{ dataset.pk }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

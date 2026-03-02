@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}massxg | The Future of Human Bioinformatics{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .hero {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-content {
+        max-width: 800px;
+        position: relative;
+        z-index: 10;
+        padding: 4rem 0;
+    }
+
+    .hero-title {
+        font-size: clamp(3rem, 5vw, 4.5rem);
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 2.5rem;
+        max-width: 600px;
+    }
+
+    .hero-cta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    /* Floating Abstract Elements for UI Premium Feel */
+    .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        z-index: 0;
+        opacity: 0.5;
+        animation: float 20s infinite alternate;
+    }
+
+    .blob-1 {
+        width: 400px;
+        height: 400px;
+        background: rgba(59, 130, 246, 0.4);
+        top: 10%;
+        right: 10%;
+        animation-delay: 0s;
+    }
+
+    .blob-2 {
+        width: 300px;
+        height: 300px;
+        background: rgba(139, 92, 246, 0.4);
+        bottom: 20%;
+        left: 20%;
+        animation-delay: -5s;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        33% {
+            transform: translate(50px, -50px) scale(1.1);
+        }
+
+        66% {
+            transform: translate(-30px, 40px) scale(0.9);
+        }
+
+        100% {
+            transform: translate(0, 0) scale(1);
+        }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 5rem;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    /* Features Section */
+    .features-section {
+        padding: 6rem 0;
+        position: relative;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--accent-primary);
+        margin-bottom: 1.5rem;
+    }
+
+    .feature-card h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature-card p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Decorative Background Blobs -->
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="container">
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content fade-in-up">
+            <span class="badge mb-4" style="display:inline-block; margin-bottom:1rem;">Platform v1.0 Live</span>
+            <h1 class="hero-title">
+                Unlocking <span class="text-gradient">Human Life</span> through Open Bioinformatics
+            </h1>
+            <p class="hero-subtitle delay-100 fade-in-up">
+                The centralized hub for human-centric datasets, frontier AI models, cutting-edge research, and
+                collaborative science.
+            </p>
+            <div class="hero-cta delay-200 fade-in-up">
+                <a href="/datasets/" class="btn btn-primary">
+                    <i class="fa-solid fa-database"></i> Explore Datasets
+                </a>
+                <a href="/ai-hub/" class="btn btn-outline">
+                    <i class="fa-solid fa-microchip"></i> Access AI Models
+                </a>
+            </div>
+
+            <div class="stats-grid delay-300 fade-in-up">
+                <div class="stat-card glass-panel">
+                    <div class="stat-value">5M+</div>
+                    <div class="stat-label">Human Phenotype Datasets</div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-value">120+</div>
+                    <div class="stat-label">Pre-trained AI Models</div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-value">45K</div>
+                    <div class="stat-label">Research Preprints</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Modules Section -->
+    <section class="features-section">
+        <div class="section-header fade-in-up">
+            <h2>A Unified Scientific Ecosystem</h2>
+            <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Everything you need to analyze,
+                learn, and collaborate on human biology in one seamless platform.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card glass-card fade-in-up delay-100">
+                <div class="feature-icon"><i class="fa-solid fa-flask"></i></div>
+                <h3>Datasets Hub</h3>
+                <p>Curated and user-uploaded data spanning Genomics, Proteomics, Metabolomics, and cellular modalities.
+                    Upload seamlessly and analyze instantly.</p>
+            </div>
+
+            <div class="feature-card glass-card fade-in-up delay-200">
+                <div class="feature-icon"><i class="fa-solid fa-brain"></i></div>
+                <h3>AI Model Registry</h3>
+                <p>Discover transformer frameworks, graph neural networks, and computer vision models tailored
+                    specifically for human biological predictions.</p>
+            </div>
+
+            <div class="feature-card glass-card fade-in-up delay-300">
+                <div class="feature-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+                <h3>Open Research (bioRxiv)</h3>
+                <p>Publish and read human-centric bioinformatics preprints. Advanced PDF parsing, citations, and
+                    interactive charts built-in.</p>
+            </div>
+
+            <div class="feature-card glass-card fade-in-up delay-100">
+                <div class="feature-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                <h3>Bioinformatics Academy</h3>
+                <p>Structured video courses from beginner data handling to advanced deep learning architectures for
+                    biological sequence analysis.</p>
+            </div>
+
+            <div class="feature-card glass-card fade-in-up delay-200">
+                <div class="feature-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+                <h3 style="display:flex; align-items:center; gap:0.5rem;">Live Collaboration <span class="badge"
+                        style="background:rgba(16,185,129,0.1); color:var(--accent-success); border-color:rgba(16,185,129,0.2);">WebRTC</span>
+                </h3>
+                <p>Join researchers globally with real-time WebSocket chat and high-fidelity video calling straight from
+                    your browser.</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

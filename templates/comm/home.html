@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Chat Rooms - massxg{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+        margin-bottom: 5rem;
+    }
+
+    .room-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        text-align: center;
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .room-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .room-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--accent-primary);
+        margin-bottom: 1.5rem;
+    }
+
+    .room-title {
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container fade-in-up"" style=" text-align: center; margin-top: 4rem;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem;">
+        <i class="fa-regular fa-comments text-gradient"></i> Live Collaboration Hub
+    </h1>
+    <p style="color: var(--text-secondary); font-size: 1.15rem; max-width: 600px; margin: 0 auto;">Join a live room to
+        discuss biological problems in real time with the massxg community using WebSockets.</p>
+
+    <div class="chat-layout delay-100">
+        {% for room in rooms %}
+        <a href="{% url 'comm:room' room.name %}" class="room-card">
+            <div class="room-icon">
+                <i class="fa-solid fa-hashtag"></i>
+            </div>
+            <h3 class="room-title">{{ room.name }}</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Public Discussion Channel
+            </p>
+            <div class="btn btn-outline" style="width: 100%;">Join Room</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

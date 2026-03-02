@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ ai_model.name }} - massxg AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 4rem 0 3rem 0;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+        z-index: 0;
+    }
+
+    .meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: background var(--transition-fast);
+    }
+
+    a.meta-tag:hover {
+        background: rgba(139, 92, 246, 0.1);
+        border-color: rgba(139, 92, 246, 0.3);
+        color: var(--text-primary);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 3rem;
+    }
+
+    @media (max-width: 900px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-header fade-in-up">
+    <div class="container" style="position: relative; z-index: 1;">
+        <a href="{% url 'ai_hub:list' %}"
+            style="color: var(--accent-secondary); font-size: 0.9rem; display: inline-block; margin-bottom: 1.5rem;">
+            &larr; Back to Registry
+        </a>
+
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+            <span class="badge"
+                style="background: rgba(139, 92, 246, 0.1); color: #c084fc; border-color: rgba(139, 92, 246, 0.2);">
+                {{ ai_model.get_architecture_display }}
+            </span>
+            {% if ai_model.is_verified %}
+            <span class="badge"
+                style="background: rgba(16, 185, 129, 0.1); color: var(--accent-success); border-color: rgba(16, 185, 129, 0.2);">
+                <i class="fa-solid fa-check"></i> Verified Model
+            </span>
+            {% endif %}
+        </div>
+
+        <h1 style="font-size: 3rem; line-height: 1.1; margin-bottom: 1.5rem; max-width: 900px;">
+            <i class="fa-solid fa-microchip" style="color: var(--accent-secondary); opacity: 0.8;"></i> {{ ai_model.name
+            }}
+        </h1>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            {% if ai_model.github_url %}
+            <a href="{{ ai_model.github_url }}" target="_blank" class="meta-tag">
+                <i class="fa-brands fa-github"></i> Repository
+            </a>
+            {% endif %}
+            {% if ai_model.paper_url %}
+            <a href="{{ ai_model.paper_url }}" target="_blank" class="meta-tag">
+                <i class="fa-solid fa-file-pdf"></i> Publication
+            </a>
+            {% endif %}
+            {% if ai_model.huggingface_url %}
+            <a href="{{ ai_model.huggingface_url }}" target="_blank" class="meta-tag">
+                🤗 HuggingFace Hub
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container content-grid fade-in-up delay-100" style="padding-bottom: 6rem;">
+    <!-- Main Content -->
+    <div>
+        <div class="glass-panel" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+                <i class="fa-solid fa-align-left text-gradient"></i> Architecture Details
+            </h3>
+            <div style="color: var(--text-primary); line-height: 1.8; white-space: pre-wrap;">{{ ai_model.description }}
+            </div>
+        </div>
+
+        <div class="glass-panel text-center" style="padding: 3rem;">
+            <i class="fa-solid fa-book-open-reader"
+                style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.5;"></i>
+            <h3>No Additional Resources</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">There are currently no tutorials or specific
+                datasets linked to this architecture registry.</p>
+        </div>
+    </div>
+
+    <!-- Sidebar / Actions -->
+    <div>
+        <div class="glass-card" style="position: sticky; top: 100px;">
+            <h3 style="margin-bottom: 1rem;">Deployment</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Initialize this model in your environment using the massxg Python SDK.
+            </p>
+
+            <div
+                style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.85rem; color: #a8b2d1; margin-bottom: 1.5rem;">
+                <div style="color: #6ee7b7; margin-bottom: 0.5rem;"># Import model architecture</div>
+                from massxg.models import load<br>
+                model = load("{{ ai_model.name|slugify }}")
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+
+            <div
+                style="display: flex; align-items: center; gap: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                <div
+                    style="width: 40px; height: 40px; border-radius: 50%; background: var(--glass-border); display: flex; align-items: center; justify-content: center; color: white;">
+                    {{ ai_model.uploaded_by.username|make_list|first|upper }}
+                </div>
+                <div>
+                    <div>Registered by</div>
+                    <strong style="color: var(--text-primary);">{{ ai_model.uploaded_by.username }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

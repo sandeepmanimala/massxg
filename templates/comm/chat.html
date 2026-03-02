@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}#{{ room_name }} - massxg Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 100px);
+        max-width: 1000px;
+        margin: 0 auto;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .chat-header {
+        padding: 1.25rem 2rem;
+        background: rgba(15, 23, 42, 0.95);
+        border-bottom: 1px solid var(--glass-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Custom Scrollbar for messages */
+    .chat-messages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(59, 130, 246, 0.3);
+        border-radius: 10px;
+    }
+
+    .message {
+        display: flex;
+        gap: 1rem;
+        max-width: 80%;
+    }
+
+    .message.sent {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .message.sent .message-avatar {
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    }
+
+    .message-content {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem 1.25rem;
+        border-radius: 0 1rem 1rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        position: relative;
+    }
+
+    .message.sent .message-content {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 1rem 0 1rem 1rem;
+    }
+
+    .message-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .message.sent .message-meta {
+        justify-content: flex-end;
+    }
+
+    .chat-input-area {
+        padding: 1.5rem 2rem;
+        background: rgba(15, 23, 42, 0.95);
+        border-top: 1px solid var(--glass-border);
+        display: flex;
+        gap: 1rem;
+    }
+
+    .chat-input {
+        flex: 1;
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid var(--glass-border);
+        padding: 1rem 1.5rem;
+        border-radius: 999px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+        outline: none;
+    }
+
+    .chat-input:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .send-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        outline: none;
+    }
+
+    .send-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-5" style="padding-top: 2rem;">
+    <div class="chat-container fade-in-up">
+        <!-- Header -->
+        <div class="chat-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="{% url 'comm:home' %}" style="color: var(--text-secondary); font-size: 1.2rem;"><i
+                        class="fa-solid fa-arrow-left"></i></a>
+                <div>
+                    <h2 style="margin: 0; font-size: 1.4rem;">#{{ room_name }}</h2>
+                    <div style="font-size: 0.85rem; color: #10b981; display: flex; align-items: center; gap: 0.3rem;">
+                        <span
+                            style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981;"></span>
+                        Live Connection Active
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="{% url 'comm:video' room_name %}" class="btn btn-outline"
+                    style="padding: 0.5rem 1rem; text-decoration: none;" title="Start Video Call">
+                    <i class="fa-solid fa-video"></i> Video
+                </a>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="chat-messages" id="chat-messages">
+            {% for message in messages %}
+            <div class="message {% if message.sender.username == request.user.username %}sent{% endif %}">
+                {% if message.sender.username != request.user.username %}
+                <div class="message-avatar" title="{{ message.sender.username }}">
+                    {{ message.sender.username|make_list|first|upper }}
+                </div>
+                {% endif %}
+
+                <div>
+                    <div class="message-content">
+                        {{ message.content }}
+                    </div>
+                    <div class="message-meta">
+                        {% if message.sender.username != request.user.username %}
+                        <strong>{{ message.sender.username }}</strong> &middot;
+                        {% endif %}
+                        {{ message.timestamp|date:"P" }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <input type="text" id="chat-message-input" class="chat-input" placeholder="Type your message..."
+                autocomplete="off">
+            <button id="chat-message-submit" class="send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- WebSockets JS -->
+{{ room_name|json_script:"room-name" }}
+{{ request.user.username|json_script:"user-name" }}
+
+<script>
+    const roomName = JSON.parse(document.getElementById('room-name').textContent);
+    const userName = JSON.parse(document.getElementById('user-name').textContent);
+
+    // Auto-scroll to bottom on load
+    const messagesDiv = document.querySelector('#chat-messages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const chatSocket = new WebSocket(
+        protocol + window.location.host + '/ws/chat/' + roomName + '/'
+    );
+
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        const isSent = data.username === userName;
+
+        let messageHTML = '';
+
+        if (isSent) {
+            messageHTML = `
+                <div class="message sent fade-in-up" style="animation-duration: 0.3s;">
+                    <div>
+                        <div class="message-content">${data.message}</div>
+                        <div class="message-meta">Just now</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            const initial = data.username.charAt(0).toUpperCase();
+            messageHTML = `
+                <div class="message fade-in-up" style="animation-duration: 0.3s;">
+                    <div class="message-avatar" title="${data.username}">${initial}</div>
+                    <div>
+                        <div class="message-content">${data.message}</div>
+                        <div class="message-meta">
+                            <strong>${data.username}</strong> &middot; Just now
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        messagesDiv.insertAdjacentHTML('beforeend', messageHTML);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+
+    chatSocket.onclose = function (e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function (e) {
+        if (e.key === 'Enter') {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function (e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        if (message.trim() === '') return;
+
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': userName
+        }));
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %}

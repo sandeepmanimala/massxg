@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Dataset - massxg{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        max-width: 800px;
+        margin: 4rem auto;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-family: inherit;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        background: rgba(59, 130, 246, 0.05);
+        border: 2px dashed rgba(59, 130, 246, 0.3);
+        border-radius: var(--radius-md);
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: border-color var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .file-input-wrapper:hover {
+        border-color: var(--accent-primary);
+    }
+
+    .file-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .helptext {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container upload-container">
+    <div class="glass-panel fade-in-up">
+        <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-cloud-arrow-up text-gradient"></i> Upload Knowledge
+        </h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2.5rem;">Contribute datasets to the open bioinformatics
+            community.</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.title.id_for_label }}">Dataset Title</label>
+                {{ form.title }}
+            </div>
+
+            <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <label class="form-label" for="{{ form.category.id_for_label }}">Category / Modality</label>
+                    {{ form.category }}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.tags.id_for_label }}">Tags (Comma Separated)</label>
+                    {{ form.tags }}
+                    <span class="helptext">e.g., PBMC, scRNA-seq, Homo sapiens</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.description.id_for_label }}">Detailed Description</label>
+                {{ form.description }}
+                <span class="helptext">Describe the origin, protocols, format, and dimensions of the data.</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Data File</label>
+                <div class="file-input-wrapper">
+                    <i class="fa-solid fa-file-arrow-up"
+                        style="font-size: 2.5rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
+                    <h4 style="margin-bottom: 0.25rem;">Drag & drop or click to browse</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Supports robust uploads up to 50GB via
+                        chunks (depending on nginx config). .H5AD, .FASTQ, .CSV, etc.</p>
+                    {{ form.file }}
+                </div>
+            </div>
+
+            <div class="form-group"
+                style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: var(--radius-md);">
+                <label class="checkbox-label" for="{{ form.is_public.id_for_label }}" style="margin: 0;">
+                    {{ form.is_public }}
+                    <strong style="color: var(--accent-success);">Make Public</strong>
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;">(Visible to everyone in the
+                        hub)</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <a href="{% url 'datasets:list' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">Process & Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Add form-control class to standard inputs
+    document.querySelectorAll('input:not([type="checkbox"]):not([type="file"]), select, textarea').forEach(input => {
+        input.classList.add('form-control');
+    });
+
+    // File input UX
+    const fileInput = document.querySelector('input[type="file"]');
+    const wrapper = document.querySelector('.file-input-wrapper');
+    const displayMeta = wrapper.querySelector('h4');
+
+    fileInput.addEventListener('change', function (e) {
+        if (this.files && this.files.length > 0) {
+            displayMeta.innerHTML = `<i class="fa-solid fa-check"></i> ${this.files[0].name} selected`;
+            wrapper.style.borderColor = 'var(--accent-success)';
+        }
+    });
+</script>
+{% endblock %}
