@@ -1,0 +1,677 @@
+{% extends 'base.html' %}
+
+{% block title %}Builder: {{ workflow.title }} - massxg{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Full screen layout for the builder */
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        padding-top: 0 !important;
+        height: calc(100vh - 70px);
+    }
+
+    /* Sidebar Palette */
+    .builder-sidebar {
+        width: 300px;
+        background: rgba(15, 23, 42, 0.95);
+        border-right: 1px solid var(--glass-border);
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .node-palette {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+    }
+
+    .palette-section {
+        margin-bottom: 2rem;
+    }
+
+    .palette-title {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Dragable Palette Items */
+    .palette-node {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid var(--glass-border);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 0.75rem;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        user-select: none;
+    }
+
+    .palette-node:active {
+        cursor: grabbing;
+    }
+
+    .palette-node:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateX(5px);
+    }
+
+    .node-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .icon-dataset {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+    }
+
+    .icon-model {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+    }
+
+    .icon-process {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+    }
+
+    .icon-output {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    /* Canvas Area */
+    .canvas-container {
+        flex: 1;
+        position: relative;
+        background: radial-gradient(#1e293b 1px, transparent 1px);
+        background-size: 20px 20px;
+        background-color: #0f172a;
+        overflow: hidden;
+    }
+
+    /* The actual nodes placed on the canvas */
+    .canvas-node {
+        position: absolute;
+        width: 220px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        cursor: grab;
+        user-select: none;
+        z-index: 5;
+    }
+
+    .canvas-node.selected {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .canvas-node-header {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .canvas-node-body {
+        padding: 1rem 0.75rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-align: center;
+    }
+
+    /* Connection Ports (Endpoints) */
+    .port {
+        width: 12px;
+        height: 12px;
+        background: #0f172a;
+        border: 2px solid var(--text-secondary);
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: crosshair;
+        z-index: 10;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    .port:hover {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        transform: translateY(-50%) scale(1.2);
+    }
+
+    .port-in {
+        left: -6px;
+    }
+
+    .port-out {
+        right: -6px;
+    }
+
+    /* SVG Overlay for Connections */
+    #connections-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        /* Let clicks pass through to canvas/nodes */
+        z-index: 2;
+    }
+
+    .connection-line {
+        fill: none;
+        stroke: var(--text-secondary);
+        stroke-width: 3;
+        stroke-linecap: round;
+        transition: stroke 0.3s;
+    }
+
+    .connection-line.active {
+        stroke: var(--accent-primary);
+        filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+    }
+
+    .connection-line.drawing {
+        stroke: rgba(16, 185, 129, 0.8);
+        stroke-dasharray: 5, 5;
+    }
+
+    /* Floating Toolbar */
+    .canvas-toolbar {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+        z-index: 20;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .tool-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tool-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--glass-border);
+    }
+
+    .tool-btn.primary {
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .tool-btn.primary:hover {
+        background: var(--accent-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sidebar -->
+<div class="builder-sidebar">
+    <div class="sidebar-header">
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.25rem;">{{ workflow.title }}</h2>
+        <a href="{% url 'workflows:list' %}"
+            style="font-size: 0.8rem; color: var(--text-secondary); text-decoration: none;">&larr; Back to Workflows</a>
+    </div>
+
+    <div class="node-palette">
+        <div class="palette-section">
+            <div class="palette-title"><i class="fa-solid fa-database"></i> Inputs</div>
+            <div class="palette-node" draggable="true" data-type="dataset" data-label="scRNA-Seq Data">
+                <div class="node-icon icon-dataset"><i class="fa-solid fa-file-csv"></i></div>
+                <span>scRNA-Seq Data</span>
+            </div>
+            <div class="palette-node" draggable="true" data-type="dataset" data-label="Spatial Transcriptomics">
+                <div class="node-icon icon-dataset"><i class="fa-solid fa-image"></i></div>
+                <span>Spatial Data</span>
+            </div>
+        </div>
+
+        <div class="palette-section">
+            <div class="palette-title"><i class="fa-solid fa-microchip"></i> AI Models</div>
+            <div class="palette-node" draggable="true" data-type="model" data-label="scGPT (Zero-shot)">
+                <div class="node-icon icon-model"><i class="fa-solid fa-brain"></i></div>
+                <span>scGPT</span>
+            </div>
+            <div class="palette-node" draggable="true" data-type="model" data-label="Graph Neural Network">
+                <div class="node-icon icon-model"><i class="fa-solid fa-project-diagram"></i></div>
+                <span>Graph Net</span>
+            </div>
+        </div>
+
+        <div class="palette-section">
+            <div class="palette-title"><i class="fa-solid fa-chart-pie"></i> Visualizers</div>
+            <div class="palette-node" draggable="true" data-type="output" data-label="UMAP Projection">
+                <div class="node-icon icon-output"><i class="fa-solid fa-chart-scatter"></i></div>
+                <span>UMAP Plot</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Canvas -->
+<div class="canvas-container" id="canvas-container">
+    <div class="canvas-toolbar">
+        <button class="tool-btn" id="btn-clear" title="Clear Canvas"><i class="fa-solid fa-trash"></i></button>
+        <button class="tool-btn primary" id="btn-save" title="Save Workflow"><i
+                class="fa-solid fa-floppy-disk"></i></button>
+        <button class="tool-btn" style="background: #10b981; color: white;" title="Execute Pipeline"><i
+                class="fa-solid fa-play"></i></button>
+    </div>
+
+    <svg id="connections-layer"></svg>
+
+    <!-- Nodes will be injected here via JS -->
+    <div id="nodes-layer"></div>
+</div>
+
+{{ workflow.pk|json_script:"workflow-id" }}
+
+<script>
+    // --- State Management ---
+    const workflowId = JSON.parse(document.getElementById('workflow-id').textContent);
+    let nodes = []; // { id, type, label, x, y, el }
+    let edges = []; // { id, sourceId, targetId, pathEl }
+    let nodeIdCounter = 1;
+    let edgeIdCounter = 1;
+
+    // UI State
+    let draggedNode = null; // Node currently being dragged on canvas
+    let offset = { x: 0, y: 0 };
+
+    let drawingEdge = null; // { sourceId, startX, startY, pathEl }
+    let selectedNodeId = null;
+
+    // --- DOM Elements ---
+    const container = document.getElementById('canvas-container');
+    const nodesLayer = document.getElementById('nodes-layer');
+    const svgLayer = document.getElementById('connections-layer');
+    const btnSave = document.getElementById('btn-save');
+    const btnClear = document.getElementById('btn-clear');
+
+    // --- Palette Drag & Drop ---
+    const paletteNodes = document.querySelectorAll('.palette-node');
+
+    paletteNodes.forEach(pn => {
+        pn.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('type', pn.dataset.type);
+            e.dataTransfer.setData('label', pn.dataset.label);
+        });
+    });
+
+    container.addEventListener('dragover', (e) => {
+        e.preventDefault(); // allow drop
+    });
+
+    container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        const label = e.dataTransfer.getData('label');
+        if (!type) return;
+
+        // Get drop coordinates relative to container
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        createNode(type, label, x, y);
+    });
+
+    // --- Node Creation logic ---
+    function createNode(type, label, x, y, id = null) {
+        const nId = id || `node_${nodeIdCounter++}`;
+
+        let iconClass, iconHTML;
+        if (type === 'dataset') { iconClass = 'icon-dataset'; iconHTML = '<i class="fa-solid fa-file-csv"></i>'; }
+        else if (type === 'model') { iconClass = 'icon-model'; iconHTML = '<i class="fa-solid fa-brain"></i>'; }
+        else if (type === 'output') { iconClass = 'icon-output'; iconHTML = '<i class="fa-solid fa-chart-scatter"></i>'; }
+        else { iconClass = 'icon-process'; iconHTML = '<i class="fa-solid fa-cog"></i>'; }
+
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'canvas-node fade-in-up';
+        nodeEl.style.left = `${x}px`;
+        nodeEl.style.top = `${y}px`;
+        nodeEl.dataset.id = nId;
+
+        nodeEl.innerHTML = `
+            <div class="port port-in" data-node="${nId}" data-type="in"></div>
+            <div class="canvas-node-header">
+                <div class="node-icon ${iconClass}">${iconHTML}</div>
+                ${label}
+            </div>
+            <div class="canvas-node-body">Configure settings...</div>
+            <div class="port port-out" data-node="${nId}" data-type="out"></div>
+        `;
+
+        // Hide IN port for datasets, OUT port for outputs
+        if (type === 'dataset') nodeEl.querySelector('.port-in').style.display = 'none';
+        if (type === 'output') nodeEl.querySelector('.port-out').style.display = 'none';
+
+        nodesLayer.appendChild(nodeEl);
+
+        nodes.push({ id: nId, type, label, x, y, el: nodeEl });
+
+        initNodeEvents(nodeEl, nId);
+    }
+
+    // --- Canvas Interaction ---
+    function initNodeEvents(nodeEl, id) {
+        // Dragging the node
+        const header = nodeEl.querySelector('.canvas-node-header');
+        header.addEventListener('mousedown', (e) => {
+            selectNode(id);
+            draggedNode = nodes.find(n => n.id === id);
+            offset.x = nodeEl.offsetLeft - e.clientX;
+            offset.y = nodeEl.offsetTop - e.clientY;
+            nodeEl.style.cursor = 'grabbing';
+            e.stopPropagation();
+        });
+
+        // Drawing edges
+        const ports = nodeEl.querySelectorAll('.port');
+        ports.forEach(port => {
+            port.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                if (port.dataset.type === 'out') {
+                    startDrawingEdge(id, e.clientX, e.clientY);
+                }
+            });
+
+            port.addEventListener('mouseup', (e) => {
+                e.stopPropagation();
+                if (drawingEdge && drawingEdge.sourceId !== id && port.dataset.type === 'in') {
+                    finishDrawingEdge(id);
+                }
+            });
+        });
+    }
+
+    // Global Mouse Handlers
+    document.addEventListener('mousemove', (e) => {
+        // Node dragging
+        if (draggedNode) {
+            const newX = e.clientX + offset.x;
+            const newY = e.clientY + offset.y;
+            draggedNode.el.style.left = `${newX}px`;
+            draggedNode.el.style.top = `${newY}px`;
+            draggedNode.x = newX;
+            draggedNode.y = newY;
+            updateEdges();
+        }
+
+        // Edge drawing
+        if (drawingEdge) {
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Draw bezier curve
+            const d = getBezierPath(drawingEdge.startX, drawingEdge.startY, mouseX, mouseY);
+            drawingEdge.pathEl.setAttribute('d', d);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (draggedNode) {
+            draggedNode.el.style.cursor = 'grab';
+            draggedNode = null;
+        }
+
+        if (drawingEdge) {
+            // Cancel drawing if dropped outside a valid port
+            svgLayer.removeChild(drawingEdge.pathEl);
+            drawingEdge = null;
+        }
+    });
+
+    container.addEventListener('mousedown', (e) => {
+        if (e.target === container || e.target === svgLayer) {
+            selectNode(null); // deselect
+        }
+    });
+
+    // --- Edge Logic ---
+    function startDrawingEdge(sourceId, clientX, clientY) {
+        const rect = container.getBoundingClientRect();
+
+        // Find exact port position
+        const sourceNode = nodes.find(n => n.id === sourceId);
+        const portEl = sourceNode.el.querySelector('.port-out');
+        const portRect = portEl.getBoundingClientRect();
+
+        const startX = portRect.left + (portRect.width / 2) - rect.left;
+        const startY = portRect.top + (portRect.height / 2) - rect.top;
+
+        const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathEl.setAttribute('class', 'connection-line drawing');
+        svgLayer.appendChild(pathEl);
+
+        drawingEdge = { sourceId, startX, startY, pathEl };
+    }
+
+    function finishDrawingEdge(targetId) {
+        const edgeId = `edge_${edgeIdCounter++}`;
+        const sourceId = drawingEdge.sourceId;
+
+        // Check if edge already exists
+        const exists = edges.find(e => e.sourceId === sourceId && e.targetId === targetId);
+        if (!exists) {
+            const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathEl.setAttribute('class', 'connection-line active');
+            pathEl.dataset.id = edgeId;
+            svgLayer.appendChild(pathEl);
+
+            edges.push({ id: edgeId, sourceId, targetId, pathEl });
+            updateEdges(); // layout newly added edge
+        }
+
+        // Clean up drawing state
+        svgLayer.removeChild(drawingEdge.pathEl);
+        drawingEdge = null;
+    }
+
+    function updateEdges() {
+        const rect = container.getBoundingClientRect();
+
+        edges.forEach(edge => {
+            const source = nodes.find(n => n.id === edge.sourceId);
+            const target = nodes.find(n => n.id === edge.targetId);
+
+            if (!source || !target) return;
+
+            const pOut = source.el.querySelector('.port-out').getBoundingClientRect();
+            const pIn = target.el.querySelector('.port-in').getBoundingClientRect();
+
+            const x1 = pOut.left + (pOut.width / 2) - rect.left;
+            const y1 = pOut.top + (pOut.height / 2) - rect.top;
+            const x2 = pIn.left + (pIn.width / 2) - rect.left;
+            const y2 = pIn.top + (pIn.height / 2) - rect.top;
+
+            const d = getBezierPath(x1, y1, x2, y2);
+            edge.pathEl.setAttribute('d', d);
+        });
+    }
+
+    function getBezierPath(x1, y1, x2, y2) {
+        // Creates a smooth curve taking horizontal departure into account
+        const dx = Math.max(Math.abs(x2 - x1) / 2, 50);
+        return `M ${x1} ${y1} C ${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2} ${y2}`;
+    }
+
+    function selectNode(id) {
+        selectedNodeId = id;
+        document.querySelectorAll('.canvas-node').forEach(el => el.classList.remove('selected'));
+        if (id) {
+            const node = nodes.find(n => n.id === id);
+            node.el.classList.add('selected');
+        }
+    }
+
+    // Delete selected component on Backspace/Delete
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            if (selectedNodeId) {
+                // remove node UI
+                const node = nodes.find(n => n.id === selectedNodeId);
+                if (node) nodesLayer.removeChild(node.el);
+
+                // remove associated edges
+                edges = edges.filter(edge => {
+                    if (edge.sourceId === selectedNodeId || edge.targetId === selectedNodeId) {
+                        svgLayer.removeChild(edge.pathEl);
+                        return false;
+                    }
+                    return true;
+                });
+
+                nodes = nodes.filter(n => n.id !== selectedNodeId);
+                selectedNodeId = null;
+            }
+        }
+    });
+
+    btnClear.addEventListener('click', () => {
+        if (confirm('Clear entire canvas?')) {
+            nodesLayer.innerHTML = '';
+            svgLayer.innerHTML = '';
+            nodes = [];
+            edges = [];
+            nodeIdCounter = 1; edgeIdCounter = 1;
+        }
+    });
+
+    // --- API Save/Load ---
+    btnSave.addEventListener('click', async () => {
+        btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        // Prepare payload
+        const payload = {
+            nodes: nodes.map(n => ({ id: n.id, type: n.type, label: n.label, pos_x: n.x, pos_y: n.y })),
+            edges: edges.map(e => ({ id: e.id, source: e.sourceId, target: e.targetId }))
+        };
+
+        try {
+            const res = await fetch(`/workflows/api/${workflowId}/save/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                btnSave.style.background = '#10b981';
+                btnSave.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => {
+                    btnSave.style.background = '';
+                    btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk"></i>';
+                }, 2000);
+            } else {
+                alert('Save failed.');
+                btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk"></i>';
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Save error.');
+            btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk"></i>';
+        }
+    });
+
+    async function loadWorkflow() {
+        try {
+            const res = await fetch(`/workflows/api/${workflowId}/load/`);
+            const data = await res.json();
+
+            let maxNId = 0;
+            data.nodes.forEach(n => {
+                createNode(n.type, n.label, n.pos_x, n.pos_y, n.id);
+                // track ID for counter
+                const num = parseInt(n.id.toString().replace('node_', '')) || 0;
+                if (num > maxNId) maxNId = num;
+            });
+            nodeIdCounter = maxNId + 1;
+
+            // Wait a tick for DOM layout to compute port bindings
+            setTimeout(() => {
+                data.edges.forEach(e => {
+                    const exists = edges.find(ed => ed.sourceId === e.source && ed.targetId === e.target);
+                    if (!exists) {
+                        const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        pathEl.setAttribute('class', 'connection-line active');
+                        pathEl.dataset.id = e.id;
+                        svgLayer.appendChild(pathEl);
+
+                        edges.push({ id: e.id, sourceId: e.source, targetId: e.target, pathEl });
+                    }
+                });
+                updateEdges();
+            }, 50);
+
+        } catch (e) {
+            console.error('Failed to load workflow data.', e);
+        }
+    }
+
+    // Auto-load existing network
+    document.addEventListener('DOMContentLoaded', loadWorkflow);
+
+</script>
+{% endblock %}

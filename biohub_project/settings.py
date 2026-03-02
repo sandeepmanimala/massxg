@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'academy',
     'research',
     'comm',
+    'workflows',
 ]
 
 MIDDLEWARE = [

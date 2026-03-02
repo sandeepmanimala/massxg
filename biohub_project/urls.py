@@ -27,6 +27,7 @@ urlpatterns = [
     path('academy/', include('academy.urls')),
     path('research/', include('research.urls')),
     path('comm/', include('comm.urls')),
+    path('workflows/', include('workflows.urls')),
 ]
 
 if settings.DEBUG:
