@@ -117,7 +117,7 @@
             <select name="level" class="category-select">
                 <option value="">All Levels</option>
                 {% for val, label in levels %}
-                <option value="{{ val }}" {% if selected_level==val %}selected{% endif %}>{{ label }}</option>
+                <option value="{{ val }}" {% if selected_level == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
             <input type="text" name="q" value="{{ query }}" class="search-input"
@@ -133,8 +133,7 @@
     <div class="course-grid fade-in-up delay-100">
         {% for course in courses %}
         <a href="{% url 'academy:detail' course.pk %}" class="glass-card course-card">
-            <div class="course-thumbnail" {% if course.thumbnail
-                %}style="background-image: url('{{ course.thumbnail }}');" {% endif %}>
+            <div class="course-thumbnail" {% if course.thumbnail %}style="background-image: url('{{ course.thumbnail }}');" {% endif %}>
                 {% if not course.thumbnail %}
                 <i class="fa-solid fa-play" style="font-size: 3rem; color: rgba(255,255,255,0.2); z-index: 5;"></i>
                 {% endif %}
