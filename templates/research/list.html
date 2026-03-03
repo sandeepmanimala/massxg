@@ -104,7 +104,7 @@
             <select name="field" class="category-select">
                 <option value="">All Fields</option>
                 {% for val, label in fields %}
-                <option value="{{ val }}" {% if selected_field==val %}selected{% endif %}>{{ label }}</option>
+                <option value="{{ val }}" {% if selected_field == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
             <input type="text" name="q" value="{{ query }}" class="search-input"

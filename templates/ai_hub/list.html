@@ -92,7 +92,7 @@
             <select name="architecture" class="category-select">
                 <option value="">All Architectures</option>
                 {% for val, label in architectures %}
-                <option value="{{ val }}" {% if selected_architecture==val %}selected{% endif %}>{{ label }}</option>
+                <option value="{{ val }}" {% if selected_architecture == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
             <input type="text" name="q" value="{{ query }}" class="search-input"
@@ -112,9 +112,7 @@
             <h3 style="color: var(--text-primary); margin-top: 1rem; margin-bottom: 0.5rem; font-size: 1.25rem;">
                 <i class="fa-solid fa-microchip"
                     style="color: var(--accent-secondary); margin-right: 0.5rem; font-size: 1rem;"></i>{{ model.name }}
-                {% if model.is_verified %}<i class="fa-solid fa-circle-check"
-                    style="color: var(--accent-success); font-size: 0.85rem;" title="Verified Architecture"></i>{% endif
-                %}
+                {% if model.is_verified %}<i class="fa-solid fa-circle-check" style="color: var(--accent-success); font-size: 0.85rem;" title="Verified Architecture"></i>{% endif %}
             </h3>
             <p
                 style="color: var(--text-secondary); font-size: 0.9rem; flex: 1; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
